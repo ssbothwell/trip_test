@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block body %}
+  <table class=entries>
+    <thead>
+      <tr>name</tr>
+      <tr>email</tr>
+      <tr>phone</tr>
+    </thead>
+    {% for member in entries %}
+    <tr>
+      <td>{{ member.name }}</td>
+      <td>{{ member.email }}</td>
+      <td>{{ member.phone }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+{% endblock %}
