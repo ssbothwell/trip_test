@@ -8,3 +8,6 @@ todo:
   - move validation functions into their own module
   - research route/controller organization
   - add readme file outlining application, deployment, testing
+  - Standardize returned json response syntax
+  - Remove update feature from add_entry controller and add
+    second query to check for duplicate entries.
