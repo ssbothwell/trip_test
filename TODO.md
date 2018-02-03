@@ -1,6 +1,10 @@
 todo: 
   - create environment specific config files
-  - move database to postgres
+  - rename trip_test.py to app.py
+  - move database to postgres (?)
   - figure out redis or memcached
-  - add unique contraint to member name field 
   - deploy site (heroku?)
+  - move database management functions into their own class
+  - move validation functions into their own module
+  - research route/controller organization
+  - add readme file outlining application, deployment, testing
