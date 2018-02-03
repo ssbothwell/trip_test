@@ -8,6 +8,7 @@ from flask_jwt_extended import (
     get_jwt_identity
 )
 
+### Configuration
 
 # Create application instance and load config
 app = Flask(__name__)
@@ -27,6 +28,7 @@ app.config['JWT_SECRET_KEY'] = 'super-secret'  # Change this!
 jwt = JWTManager(app)
 
 
+### Database management
 
 def connect_db():
     """ connect to sqlite database """
@@ -65,6 +67,8 @@ def initdb_command():
     init_db()
     print('Database initialized')
 
+
+### Views
 
 @app.route('/index', methods=['GET'])
 def index():
