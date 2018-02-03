@@ -12,5 +12,8 @@ curl -i -H "Content-Type: application/json" -H "Authorization: Bearer $ACCESS" -
 
 # LOGIN
 curl -H "Content-Type: application/json" -X POST \
+  -d '{"username":"nothing_user","password":"password"}' http://localhost:5000/login
+
+curl -H "Content-Type: application/json" -X POST \
   -d '{"username":"admin_user","password":"password"}' http://localhost:5000/login
 
