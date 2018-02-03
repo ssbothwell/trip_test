@@ -101,15 +101,15 @@ def get_entry() -> request:
     # Validate access rights
     _, access_rights = get_jwt_identity()
     if access_rights == 0:
-        return jsonify({"msg": "Access Denied"}, 403)
+        return jsonify({"msg": "Access Denied"}), 403
 
     # Validate request
     if not valid_json(request):
-        return jsonify({"msg": "Missing JSON in request"}, 400)
+        return jsonify({"msg": "Missing JSON in request"}), 400
 
     # Query database
     database = get_db()
-    member_id = request.json['memberID']
+    member_id = request.get_json()['memberID']
 
     query = database.execute('SELECT * FROM members where memberID=?', [member_id]).fetchall()
     entries = [{'memberID': row['memberID'],
@@ -117,7 +117,10 @@ def get_entry() -> request:
                 'phone': row['phone'],
                 'email': row['email']
                } for row in query]
-    return jsonify(entries, 200)
+    if entries:
+        return jsonify(entries[0]), 200
+    else:
+        return jsonify({'msg': 'No Such User'}), 400
 
 
 @app.route('/', methods=['PUT'])
@@ -129,33 +132,39 @@ def add_entry() -> request:
     # Validate access rights
     _, access_rights = get_jwt_identity()
     if access_rights <= 1:
-        return jsonify({"msg": "Access Denied"}, 200)
+        return jsonify({"msg": "Access Denied"}), 200
 
     # Validate request
     if not valid_json(request):
         return jsonify({"msg": "Missing JSON in request"}), 400
-    if not (valid_email(request.json['email']) or
-            valid_phone(request.json['phone'])):
+    if not (valid_email(request.get_json()['email']) or
+            valid_phone(request.get_json()['phone'])):
         return jsonify({"msg": "Please enter valid email and phone numbers"}), 400
 
-    name = request.json['name']
-    email = request.json['email']
-    phone = request.json['phone']
+    name = request.get_json()['name']
+    email = request.get_json()['email']
+    phone = request.get_json()['phone']
 
     # Query Database
+    # Based on my research, the `sqlite3` module does not
+    # return errors from the sqlite database. This is an
+    # issue for us detecting insertions with duplicate `name`
+    # fields.
+    # As a work-around I am doing a second query to check
+    # for existing records with the desired `name` field.
+
     database = get_db()
     user = database.execute('SELECT name FROM members WHERE name=?',
-                            [name]).fetchall()
-    # Update row
+                            [name]).fetchone()
+    # Name field already exists
     if user:
-        database.execute('UPDATE members SET phone=?,email=? WHERE name=?',
-                         [phone, email, name])
-    # Create row
+        return jsonify({"msg": "Name Already Exists"}), 409
+    # Name field doesn't exist so create a row
     else:
         database.execute('INSERT INTO members (name, email, phone) \
                          VALUES (?, ?, ?)', [name, email, phone])
     database.commit()
-    return jsonify({"msg": "success"}), 201
+    return jsonify({"msg": "Success"}), 201
 
 
 @app.route('/', methods=['DELETE'])
@@ -167,13 +176,13 @@ def delete_entry() -> request:
     # Validate access rights
     _, access_rights = get_jwt_identity()
     if access_rights <= 2:
-        return jsonify({"msg": "Access Denied"}, 200)
+        return jsonify({"msg": "Access Denied"}), 200
 
     # Validate request
     if not valid_json(request):
         return jsonify({"msg": "Missing JSON in request"}), 400
     database = get_db()
-    member_id = request.json['memberID']
+    member_id = request.get_json()['memberID']
 
     # Check for entry
     user = database.execute('SELECT name FROM members WHERE memberID=?',
@@ -183,7 +192,7 @@ def delete_entry() -> request:
                          [member_id])
         database.commit()
         return jsonify({"msg": "success"}), 200
-    return jsonify({"msg": "no such entry"}), 404
+    return jsonify({"msg": "No Such Entry"}), 404
 
 
 @app.route('/login', methods=['POST'])
@@ -193,8 +202,8 @@ def login() -> request:
     if not request.is_json:
         return jsonify({"msg": "Missing JSON in request"}), 400
 
-    username = request.json.get('username', None)
-    password = request.json.get('password', None)
+    username = request.get_json().get('username', None)
+    password = request.get_json().get('password', None)
 
     if not username:
         return jsonify({"msg": "Missing username parameter"}), 400

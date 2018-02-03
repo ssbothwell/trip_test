@@ -2,7 +2,9 @@ import os
 import trip_test
 import unittest
 import tempfile
+from flask import request
 import json
+
 
 class TripTestCase(unittest.TestCase):
     def setUp(self):
@@ -19,7 +21,7 @@ class TripTestCase(unittest.TestCase):
         phone = '9999999999'
         mock_data = dict(name=name, email=email, phone=phone)
 
-        self.generate_mock_data('admin_user', mock_data)
+        self.put_helper('admin_user', mock_data)
 
 
     def tearDown(self):
@@ -27,7 +29,13 @@ class TripTestCase(unittest.TestCase):
         os.unlink(trip_test.app.config['DATABASE'])
 
 
-    def login(self, username, password):
+    def login(self, username: str, password: str)-> str:
+        """
+        Helper function for user auth. Takes a
+        `username` and `password` and returns
+        a JWT token.
+        """
+        
         headers = {'content-type': 'application/json'}
         response = self.app.post('/login', 
                  data=json.dumps(dict(username=username, password=password)),
@@ -36,8 +44,11 @@ class TripTestCase(unittest.TestCase):
         return  json_response['access_token']
 
 
-    def generate_mock_data(self, user: str, data: dict):
-        """ Insert a row into members table using a put request """
+    def put_helper(self, user: str, data: dict) -> dict:
+        """
+        Insert a row into members table using a 
+        put request. Returns the response.
+        """
         # Login
         access_token = self.login(user, 'password')
 
@@ -50,8 +61,10 @@ class TripTestCase(unittest.TestCase):
         return response
 
 
-    def test_get(self):
-        """ test get a row from members table using get request """
+    def test_get_entry_a(self):
+        """ 
+        get_entry controller success test.
+        """
 
         # Login
         access_token = self.login('admin_user', 'password')
@@ -69,8 +82,54 @@ class TripTestCase(unittest.TestCase):
             self.assertEqual(json_response['name'], 'initial user')
 
 
-    def test_putA(self):
-        """ test put request success with admin user account """
+    def test_get_entry_b(self):
+        """ 
+        get_entry controller failure test.
+        User has wrong access privilege.
+        """
+
+        # Login
+        access_token = self.login('nothing_user', 'password')
+
+        # Generate request
+        headers = {'content-type': 'application/json',
+                   'Authorization': 'Bearer %s' % access_token}
+        response = self.app.get('/',
+                                data=json.dumps(dict(memberID='1')),
+                                headers=headers)
+        with self.subTest():
+            self.assertEqual(response.status_code, 403)
+        with self.subTest():
+            json_response = json.loads(response.get_data(as_text=True))
+            self.assertEqual(json_response['msg'], 'Access Denied')
+
+
+    def test_get_entry_c(self):
+        """ 
+        get_entry controller failure test.
+        No such `memberID`
+        """
+
+        # Login
+        access_token = self.login('admin_user', 'password')
+
+        # Generate request
+        headers = {'content-type': 'application/json',
+                   'Authorization': 'Bearer %s' % access_token}
+        response = self.app.get('/',
+                                data=json.dumps(dict(memberID='11')),
+                                headers=headers)
+        with self.subTest():
+            self.assertEqual(response.status_code, 400)
+        with self.subTest():
+            json_response = json.loads(response.get_data(as_text=True))
+            self.assertEqual(json_response['msg'], 'No Such User')
+
+
+    def test_add_entry_a(self):
+        """
+        add_entry controller success test.
+        """
 
         # Mock member data
         name = 'foobar'
@@ -78,12 +137,15 @@ class TripTestCase(unittest.TestCase):
         phone = '8001234567'
         mock_data = dict(name=name, email=email, phone=phone)
 
-        response = self.generate_mock_data('admin_user', mock_data)
+        response = self.put_helper('admin_user', mock_data)
         self.assertEqual(response.status_code, 201)
 
 
-    def test_putB(self):
-        """ test put request failure with unprivileged user account """
+    def test_add_entry_b(self):
+        """
+        add_entry controller failure test.
+        User has wrong access privilege.
+        """
 
         # Mock member data
         name = 'foobar'
@@ -91,7 +153,7 @@ class TripTestCase(unittest.TestCase):
         phone = '8001234567'
         mock_data = dict(name=name, email=email, phone=phone)
 
-        response = self.generate_mock_data('get_user', mock_data)
+        response = self.put_helper('get_user', mock_data)
         with self.subTest():
             self.assertEqual(response.status_code, 200)
         with self.subTest():
@@ -99,8 +161,30 @@ class TripTestCase(unittest.TestCase):
             self.assertEqual(json_response['msg'], 'Access Denied')
 
     
-    def test_delete(self):
-        """ Tests delete request """
+    def test_add_entry_c(self):
+        """
+        add_entry controller failure test.
+        Duplicate member name.
+        """
+
+        # Mock member data
+        name = 'initial user'
+        email = 'foo@bar.baz'
+        phone = '8001234567'
+        mock_data = dict(name=name, email=email, phone=phone)
+
+        response = self.put_helper('admin_user', mock_data)
+        with self.subTest():
+            self.assertEqual(response.status_code, 409)
+        with self.subTest():
+            json_response = json.loads(response.get_data(as_text=True))
+            self.assertEqual(json_response['msg'], 'Name Already Exists')
+
+
+    def test_delete_entry_a(self):
+        """
+        delete_entry controller success test.
+        """
 
         # Login
         access_token = self.login('admin_user', 'password')
@@ -116,6 +200,51 @@ class TripTestCase(unittest.TestCase):
         with self.subTest():
             json_response = json.loads(response.get_data(as_text=True))
             self.assertEqual(json_response['msg'], 'success')
+
+
+    def test_delete_entry_b(self):
+        """
+        delete_entry controller failure test.
+        User has wrong access privilege.
+        """
+
+        # Login
+        access_token = self.login('nothing_user', 'password')
+
+        # Generate request
+        headers = {'content-type': 'application/json',
+                   'Authorization': 'Bearer %s' % access_token}
+        response = self.app.delete('/',
+                                data=json.dumps(dict(memberID='1')),
+                                headers=headers)
+        with self.subTest():
+            self.assertEqual(response.status_code, 200)
+        with self.subTest():
+            json_response = json.loads(response.get_data(as_text=True))
+            self.assertEqual(json_response['msg'], 'Access Denied')
+
+
+    def test_delete_entry_c(self):
+        """
+        delete_entry controller failure test.
+        No such `memberID`
+        """
+
+        # Login
+        access_token = self.login('admin_user', 'password')
+
+        # Generate request
+        headers = {'content-type': 'application/json',
+                   'Authorization': 'Bearer %s' % access_token}
+        response = self.app.delete('/',
+                                data=json.dumps(dict(memberID='8')),
+                                headers=headers)
+        with self.subTest():
+            self.assertEqual(response.status_code, 404)
+        with self.subTest():
+            json_response = json.loads(response.get_data(as_text=True))
+            self.assertEqual(json_response['msg'], 'No Such Entry')
+
 
 if __name__ == '__main__':
     unittest.main()
