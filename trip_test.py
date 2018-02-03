@@ -1,10 +1,9 @@
 import os
 import sqlite3
 import re
-from flask import (Flask, request, session, g, jsonify,
-                   abort, url_for, redirect, render_template)
+from flask import (Flask, request, g, jsonify, render_template)
 from flask_jwt_extended import (JWTManager, jwt_required,
-                                create_access_token, 
+                                create_access_token,
                                 get_jwt_identity)
 
 ### Configuration
@@ -16,7 +15,7 @@ app.config.from_object(__name__)
 # Default config
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'trip_test.db'),
-    SECRET_KEY='development key', 
+    SECRET_KEY='development key',
     USERNAME='admin',
     PASSWORD='default'
 ))
@@ -73,7 +72,7 @@ def initdb_command():
 def index():
     db = get_db()
     query = db.execute('SELECT memberID, name, email, phone FROM members order by memberID desc')
-    entries = query.fetchall() 
+    entries = query.fetchall()
     return render_template('index.html', entries=entries)
 
 
@@ -81,7 +80,7 @@ def index():
 @jwt_required
 def get_entry():
     # Validate access rights
-    username, access_rights = get_jwt_identity()
+    _, access_rights = get_jwt_identity()
     if access_rights == 0:
         return jsonify({"msg": "Access Denied"}, 200)
 
@@ -94,12 +93,11 @@ def get_entry():
     memberID = request.json['memberID']
 
     query = db.execute('SELECT * FROM members where memberID=?', [memberID]).fetchall()
-    entries = [ { 'memberID': row['memberID'],
-                  'name': row['name'],
-                  'phone': row['phone'],
-                  'email': row['email']
-                }
-                for row in query]
+    entries = [{'memberID': row['memberID'],
+                'name': row['name'],
+                'phone': row['phone'],
+                'email': row['email']
+               } for row in query]
     return jsonify(entries, 200)
 
 
@@ -110,25 +108,25 @@ def add_entry():
     username, access_rights = get_jwt_identity()
     if access_rights <= 1:
         return jsonify({"msg": "Access Denied"}, 200)
-    
+
     # Validate request
     if not valid_json(request):
         return jsonify({"msg": "Missing JSON in request"}), 400
-    if not (valid_email(request.json['email']) or 
+    if not (valid_email(request.json['email']) or
             valid_phone(request.json['phone'])):
         return jsonify({"msg": "Please enter valid email and phone numbers"}), 400
 
     name = request.json['name']
     email = request.json['email']
     phone = request.json['phone']
-          
+
     # Query Database
     db = get_db()
     existing_user = db.execute('SELECT name FROM members WHERE name=?',
                                [name]).fetchall()
     # Update row
     if existing_user:
-        db.execute('UPDATE members SET phone=?,email=? WHERE name=?', 
+        db.execute('UPDATE members SET phone=?,email=? WHERE name=?',
                    [phone, email, name])
     # Create row
     else:
@@ -211,13 +209,13 @@ def valid_json(request) -> bool:
         return False
 
     if ((request.method == 'DELETE' or
-        request.method == 'GET') and 
-        not 'memberID' in request.json):
+         request.method == 'GET') and
+            not 'memberID' in request.json):
         return False
 
-    if (request.method == 'PUT' and 
-        (not 'name' in request.json or 
-         not 'email' in request.json or 
-         not 'phone' in request.json)):
+    if (request.method == 'PUT' and
+           (not 'name' in request.json or
+            not 'email' in request.json or
+            not 'phone' in request.json)):
         return False
     return True
