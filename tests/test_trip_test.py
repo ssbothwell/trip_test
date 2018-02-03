@@ -50,6 +50,25 @@ class TripTestCase(unittest.TestCase):
         return response
 
 
+    def test_get(self):
+        """ test get a row from members table using get request """
+
+        # Login
+        access_token = self.login('admin_user', 'password')
+
+        # Generate request
+        headers = {'content-type': 'application/json',
+                   'Authorization': 'Bearer %s' % access_token}
+        response = self.app.get('/',
+                                data=json.dumps(dict(memberID='1')),
+                                headers=headers)
+        with self.subTest():
+            self.assertEqual(response.status_code, 200)
+        with self.subTest():
+            json_response = json.loads(response.get_data(as_text=True))
+            self.assertEqual(json_response['name'], 'initial user')
+
+
     def test_putA(self):
         """ test put request success with admin user account """
 
@@ -77,8 +96,26 @@ class TripTestCase(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
         with self.subTest():
             json_response = json.loads(response.get_data(as_text=True))
-            self.assertEqual(json_response[0]['msg'], 'Access Denied')
+            self.assertEqual(json_response['msg'], 'Access Denied')
 
+    
+    def test_delete(self):
+        """ Tests delete request """
+
+        # Login
+        access_token = self.login('admin_user', 'password')
+
+        # Generate request
+        headers = {'content-type': 'application/json',
+                   'Authorization': 'Bearer %s' % access_token}
+        response = self.app.delete('/',
+                                data=json.dumps(dict(memberID='1')),
+                                headers=headers)
+        with self.subTest():
+            self.assertEqual(response.status_code, 200)
+        with self.subTest():
+            json_response = json.loads(response.get_data(as_text=True))
+            self.assertEqual(json_response['msg'], 'success')
 
 if __name__ == '__main__':
     unittest.main()
