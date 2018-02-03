@@ -132,8 +132,8 @@ def add_entry():
                    [phone, email, name])
     # Create row
     else:
-        db.execute('INSERT INTO members (name, email, phone) VALUES (?, ?, ?)',
-                     [name, email, phone])
+        db.execute('INSERT INTO members (name, email, phone) \
+                    VALUES (?, ?, ?)', [name, email, phone])
     db.commit()
     return jsonify({"msg": "success"}), 201
 
