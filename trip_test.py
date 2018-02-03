@@ -1,3 +1,10 @@
+"""
+Tripp Inc Backend Exercise
+Solomon Bothwell
+
+A basic REST interface to a sqlite database with JWT
+authorization. 
+"""
 import os
 import sqlite3
 import re
@@ -30,14 +37,16 @@ jwt = JWTManager(app)
 
 def connect_db():
     """ connect to sqlite database """
-    rv = sqlite3.connect(app.config['DATABASE'])
-    rv.row_factory = sqlite3.Row
-    return rv
+
+    database = sqlite3.connect(app.config['DATABASE'])
+    database.row_factory = sqlite3.Row
+    return database
 
 
 def get_db():
     """ returns the database if already connected
     else connects database and returns it """
+
     if not hasattr(g, 'sqlite_db'):
         g.sqlite_db = connect_db()
     return g.sqlite_db
@@ -46,16 +55,18 @@ def get_db():
 @app.teardown_appcontext
 def close_db(error):
     """ Close database connect """
+
     if hasattr(g, 'sqlite_db'):
         g.sqlite_db.close()
 
 
 def init_db():
     """ Writes the schema file to the database """
-    db = get_db()
-    with app.open_resource('schema.sql', mode='r') as f:
-        db.cursor().executescript(f.read())
-    db.commit()
+
+    database = get_db()
+    with app.open_resource('schema.sql', mode='r') as schema:
+        database.cursor().executescript(schema.read())
+    database.commit()
 
 
 @app.cli.command('initdb')
@@ -69,30 +80,36 @@ def initdb_command():
 ### Controllers
 
 @app.route('/index', methods=['GET'])
-def index():
-    db = get_db()
-    query = db.execute('SELECT memberID, name, email, phone FROM members order by memberID desc')
+def index() -> request:
+    """ temp controller for rendering all members
+    to a an html template. """
+    database = get_db()
+    query = database.execute('SELECT memberID, name, email,\
+                             phone FROM members order by memberID desc')
     entries = query.fetchall()
     return render_template('index.html', entries=entries)
 
 
 @app.route('/', methods=['GET'])
 @jwt_required
-def get_entry():
+def get_entry() -> request:
+    """ Retrieve a member from the member table.
+    Requires acess_rights >= 1 """
+
     # Validate access rights
     _, access_rights = get_jwt_identity()
     if access_rights == 0:
-        return jsonify({"msg": "Access Denied"}, 200)
+        return jsonify({"msg": "Access Denied"}, 403)
 
     # Validate request
     if not valid_json(request):
         return jsonify({"msg": "Missing JSON in request"}, 400)
 
     # Query database
-    db = get_db()
-    memberID = request.json['memberID']
+    database = get_db()
+    member_id = request.json['memberID']
 
-    query = db.execute('SELECT * FROM members where memberID=?', [memberID]).fetchall()
+    query = database.execute('SELECT * FROM members where memberID=?', [member_id]).fetchall()
     entries = [{'memberID': row['memberID'],
                 'name': row['name'],
                 'phone': row['phone'],
@@ -103,9 +120,11 @@ def get_entry():
 
 @app.route('/', methods=['PUT'])
 @jwt_required
-def add_entry():
+def add_entry() -> request:
+    """ Add or update a member in the member table.
+    Requires acess_rights == 2 """
     # Validate access rights
-    username, access_rights = get_jwt_identity()
+    _, access_rights = get_jwt_identity()
     if access_rights <= 1:
         return jsonify({"msg": "Access Denied"}, 200)
 
@@ -121,61 +140,66 @@ def add_entry():
     phone = request.json['phone']
 
     # Query Database
-    db = get_db()
-    existing_user = db.execute('SELECT name FROM members WHERE name=?',
-                               [name]).fetchall()
+    database = get_db()
+    user = database.execute('SELECT name FROM members WHERE name=?',
+                            [name]).fetchall()
     # Update row
-    if existing_user:
-        db.execute('UPDATE members SET phone=?,email=? WHERE name=?',
-                   [phone, email, name])
+    if user:
+        database.execute('UPDATE members SET phone=?,email=? WHERE name=?',
+                         [phone, email, name])
     # Create row
     else:
-        db.execute('INSERT INTO members (name, email, phone) \
-                    VALUES (?, ?, ?)', [name, email, phone])
-    db.commit()
+        database.execute('INSERT INTO members (name, email, phone) \
+                         VALUES (?, ?, ?)', [name, email, phone])
+    database.commit()
     return jsonify({"msg": "success"}), 201
 
 
 @app.route('/', methods=['DELETE'])
 @jwt_required
-def delete_entry():
+def delete_entry() -> request:
+    """ Removes a user with given memberID from
+    the member table. Requires acess_rights == 3 """
     # Validate access rights
-    username, access_rights = get_jwt_identity()
+    _, access_rights = get_jwt_identity()
     if access_rights <= 2:
         return jsonify({"msg": "Access Denied"}, 200)
 
     # Validate request
     if not valid_json(request):
         return jsonify({"msg": "Missing JSON in request"}), 400
-    db = get_db()
-    memberID = request.json['memberID']
+    database = get_db()
+    member_id = request.json['memberID']
 
     # Check for entry
-    existing_user = db.execute('SELECT name FROM members WHERE memberID=?',
-                               [memberID]).fetchall()
-    if existing_user:
-        db.execute('DELETE FROM members WHERE memberID=?', [memberID])
-        db.commit()
+    user = database.execute('SELECT name FROM members WHERE memberID=?',
+                            [member_id]).fetchall()
+    if user:
+        database.execute('DELETE FROM members WHERE memberID=?',
+                         [member_id])
+        database.commit()
         return jsonify({"msg": "success"}), 200
     return jsonify({"msg": "no such entry"}), 404
 
 
 @app.route('/login', methods=['POST'])
-def login():
+def login() -> request:
     """ Accept login info and return JWT token """
     if not request.is_json:
         return jsonify({"msg": "Missing JSON in request"}), 400
 
     username = request.json.get('username', None)
     password = request.json.get('password', None)
+
     if not username:
         return jsonify({"msg": "Missing username parameter"}), 400
     if not password:
         return jsonify({"msg": "Missing password parameter"}), 400
 
     # Get user access rights from database
-    db = get_db()
-    query = db.execute('SELECT * FROM users where username=?', [username]).fetchall()
+    database = get_db()
+    query = database.execute('SELECT * FROM users where username=?',
+                             [username]).fetchall()
     if query:
         db_password = query[0]['password']
         # Wrong password
@@ -190,32 +214,33 @@ def login():
         return jsonify({"msg": "Bad username or password"}), 401
 
 
-
 ### Validation Helper functions
 
 def valid_phone(phone_number: str) -> bool:
+    """ Validates a phone number using a regex pattern """
     pattern = re.compile(r'(\d{3})\D*(\d{3})\D*(\d{4})\D*(\d*)$', re.VERBOSE)
     return pattern.match(phone_number) is not None
 
 
 def valid_email(email: str) -> bool:
+    """ Validates a email using a regex pattern """
     pattern = re.compile(r'[^@]+@[^@]+\.[^@]+', re.VERBOSE)
     return pattern.match(email) is not None
 
 
-def valid_json(request) -> bool:
+def valid_json(req: request) -> bool:
     """ ensure json requests contain correct fields """
-    if not request.json:
+    if not req.json:
         return False
 
-    if ((request.method == 'DELETE' or
-         request.method == 'GET') and
-            not 'memberID' in request.json):
+    if ((req.method == 'DELETE' or
+         req.method == 'GET') and
+            not 'memberID' in req.json):
         return False
 
-    if (request.method == 'PUT' and
-           (not 'name' in request.json or
-            not 'email' in request.json or
-            not 'phone' in request.json)):
+    if (req.method == 'PUT' and
+           (not 'name' in req.json or
+            not 'email' in req.json or
+            not 'phone' in req.json)):
         return False
     return True
