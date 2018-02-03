@@ -3,10 +3,9 @@ import sqlite3
 import re
 from flask import (Flask, request, session, g, jsonify,
                    abort, url_for, redirect, render_template)
-from flask_jwt_extended import (
-    JWTManager, jwt_required, create_access_token,
-    get_jwt_identity
-)
+from flask_jwt_extended import (JWTManager, jwt_required,
+                                create_access_token, 
+                                get_jwt_identity)
 
 ### Configuration
 
@@ -17,7 +16,7 @@ app.config.from_object(__name__)
 # Default config
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'trip_test.db'),
-    SECRET_KEY='development key',
+    SECRET_KEY='development key', 
     USERNAME='admin',
     PASSWORD='default'
 ))
