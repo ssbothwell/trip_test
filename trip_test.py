@@ -80,18 +80,6 @@ def initdb_command() -> None:
 
 ### Controllers
 
-@app.route('/index', methods=['GET'])
-def index() -> request:
-    """ temp controller for rendering all members
-    to an html template. """
-
-    database = get_db()
-    query = database.execute('SELECT memberID, name, email,\
-                             phone FROM members order by memberID desc')
-    entries = query.fetchall()
-    return render_template('index.html', entries=entries)
-
-
 @app.route('/', methods=['GET'])
 @jwt_required
 def get_entry() -> request:
