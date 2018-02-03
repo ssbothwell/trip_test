@@ -53,14 +53,14 @@ def get_db():
 
 
 @app.teardown_appcontext
-def close_db(error):
+def close_db(error) -> None:
     """ Close database connect """
 
     if hasattr(g, 'sqlite_db'):
         g.sqlite_db.close()
 
 
-def init_db():
+def init_db() -> None:
     """ Writes the schema file to the database """
 
     database = get_db()
@@ -70,9 +70,10 @@ def init_db():
 
 
 @app.cli.command('initdb')
-def initdb_command():
+def initdb_command() -> None:
     """ initialization function for use with
     the Flask CLI tool """
+
     init_db()
     print('Database initialized')
 
@@ -82,7 +83,8 @@ def initdb_command():
 @app.route('/index', methods=['GET'])
 def index() -> request:
     """ temp controller for rendering all members
-    to a an html template. """
+    to an html template. """
+
     database = get_db()
     query = database.execute('SELECT memberID, name, email,\
                              phone FROM members order by memberID desc')
@@ -123,6 +125,7 @@ def get_entry() -> request:
 def add_entry() -> request:
     """ Add or update a member in the member table.
     Requires acess_rights == 2 """
+
     # Validate access rights
     _, access_rights = get_jwt_identity()
     if access_rights <= 1:
@@ -160,6 +163,7 @@ def add_entry() -> request:
 def delete_entry() -> request:
     """ Removes a user with given memberID from
     the member table. Requires acess_rights == 3 """
+
     # Validate access rights
     _, access_rights = get_jwt_identity()
     if access_rights <= 2:
@@ -185,6 +189,7 @@ def delete_entry() -> request:
 @app.route('/login', methods=['POST'])
 def login() -> request:
     """ Accept login info and return JWT token """
+
     if not request.is_json:
         return jsonify({"msg": "Missing JSON in request"}), 400
 
