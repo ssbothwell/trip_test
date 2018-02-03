@@ -2,12 +2,14 @@
 {% block body %}
   <table class=entries>
     <thead>
+      <tr>ID</tr>
       <tr>name</tr>
       <tr>email</tr>
       <tr>phone</tr>
     </thead>
     {% for member in entries %}
     <tr>
+      <td>{{ member.memberID }} </td>
       <td>{{ member.name }}</td>
       <td>{{ member.email }}</td>
       <td>{{ member.phone }}</td>
