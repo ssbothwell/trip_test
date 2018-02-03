@@ -67,7 +67,7 @@ def initdb_command():
     print('Database initialized')
 
 
-### Views
+### Controllers
 
 @app.route('/index', methods=['GET'])
 def index():
