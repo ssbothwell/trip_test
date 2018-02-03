@@ -2,7 +2,7 @@ drop table if exists members;
 drop table if exists users;
 create table members (
   memberID integer primary key autoincrement,
-  name text not null,
+  name text not null unique,
   email text not null,
   phone text not null
 );
