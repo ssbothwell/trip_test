@@ -40,8 +40,48 @@ installation script to demonstrate successful function of the code is optional.
 
 ### Implementation Details
 
+I wrote this REST server using Flask, SQLite3 database, and 
+the Flask-JWT-Exended plugin. The database contains a the
+
+`members` table as described in the assignment and a `users`
+table for access control and JWT token generation. Users must
+hit `/login` route with a `POST` request containing valid 
+username and password from the `users` table. Passwords are
+not hashed because there is no frontend and no registration
+system. It is assumed that hashing would happen at those points.
+
+`/login` returns a JSON response with a JWT access token. The
+token can then be attached as a header to requests to REST api
+for authentication. Users have a hierarchical access control
+assigned in the database: 
+        
+        `access_rights` == 0 = no access (blacklisted user)
+        `access_rights` => 1 = GET requests
+        `access_rights` => 2 = PUT requests
+        `access_rights` == 3 = DELETE requests
+
+
+
 ### Deployment
+
+```
+$ gunicorn application:app
+```
 
 ### Tests
 
+```
+$ py.test tests/
+```
+
 ### Known Issues
+
+SQLite database is not suitable for cloud server setups such
+as Heroku. I plan to switch to PostgreSQL
+
+I also am not sure how well Memcached will integrate with SQLite.
+I am currently looking into this.
+
+Production specific environment variables are not currently 
+defined yet. I think the implementation of this will be affected
+by my choice of cloud service provider.

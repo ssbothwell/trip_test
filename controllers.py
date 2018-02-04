@@ -126,7 +126,7 @@ def login() -> request:
     if not username:
         return jsonify({"msg": "Missing username parameter"}), 400
     if not password:
-        return jsonify({"msg": "Missing passwordparameter"}), 400
+        return jsonify({"msg": "Missing password parameter"}), 400
 
     # Get user access rights from database
     db = database.get()
