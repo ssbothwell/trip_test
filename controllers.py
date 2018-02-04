@@ -1,10 +1,10 @@
 """
 Controllers
 """
-import re
 import sqlite3
 from trip_test import app
 from trip_test import database
+from trip_test.validators import valid_json, valid_email, valid_phone
 from flask import (request, g, jsonify, render_template)
 from flask_jwt_extended import (jwt_required,
                                 create_access_token,
@@ -146,34 +146,3 @@ def login() -> request:
     else:
         return jsonify({"msg": "Bad username or password"}), 401
 
-
-### Validation Helper functions
-
-def valid_phone(phone_number: str) -> bool:
-    """ Validates a phone number using a regex pattern """
-    pattern = re.compile(r'(\d{3})\D*(\d{3})\D*(\d{4})\D*(\d*)$', re.VERBOSE)
-    return pattern.match(phone_number) is not None
-
-
-def valid_email(email: str) -> bool:
-    """ Validates a email using a regex pattern """
-    pattern = re.compile(r'[^@]+@[^@]+\.[^@]+', re.VERBOSE)
-    return pattern.match(email) is not None
-
-
-def valid_json(req: request) -> bool:
-    """ ensure json requests contain correct fields """
-    if not req.json:
-        return False
-
-    if ((req.method == 'DELETE' or
-         req.method == 'GET') and
-            not 'memberID' in req.json):
-        return False
-
-    if (req.method == 'PUT' and
-           (not 'name' in req.json or
-            not 'email' in req.json or
-            not 'phone' in req.json)):
-        return False
-    return True
