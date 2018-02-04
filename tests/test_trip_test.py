@@ -6,7 +6,7 @@ from flask import request
 import json
 
 
-class TripTestCase(unittest.TestCase):
+class ControllersTestCases(unittest.TestCase):
     def setUp(self):
         # Create temp database
         self.db_fd, trip_test.app.config['DATABASE'] = tempfile.mkstemp()
@@ -41,7 +41,10 @@ class TripTestCase(unittest.TestCase):
                  data=json.dumps(dict(username=username, password=password)),
                  headers=headers)
         json_response = json.loads(response.get_data(as_text=True))
-        return  json_response['access_token']
+        if 'access_token' in json_response: 
+            return json_response['access_token']
+        else:
+            return json_response['msg']
 
 
     def put_helper(self, user: str, data: dict) -> dict:
@@ -59,6 +62,35 @@ class TripTestCase(unittest.TestCase):
                                 data=json.dumps(data),
                                 headers=headers)
         return response
+
+
+    def test_login_a(self):
+        """
+        login controller success test.
+        """
+
+        access_token = self.login('admin_user', 'password')
+        self.assertNotEqual(access_token, 'Bad Username Or Password')
+
+
+    def test_login_b(self):
+        """
+        login controller failure test.
+        Bad username
+        """
+
+        access_token = self.login('foobar', 'password')
+        self.assertEqual(access_token, 'Bad Username Or Password')
+
+
+    def test_login_b(self):
+        """
+        login controller failure test.
+        Bad password
+        """
+
+        access_token = self.login('admin_user', 'foobar')
+        self.assertEqual(access_token, 'Bad Username Or Password')
 
 
     def test_get_entry_a(self):

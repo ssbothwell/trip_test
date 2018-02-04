@@ -23,7 +23,7 @@ def get_entry() -> request:
 
     # Validate request
     if not valid_json(request):
-        return jsonify({"msg": "Missing JSON in request"}), 400
+        return jsonify({"msg": "Missing JSON In Request"}), 400
 
     # Query database
     db = database.get()
@@ -54,10 +54,10 @@ def add_entry() -> request:
 
     # Validate request
     if not valid_json(request):
-        return jsonify({"msg": "Missing JSON in request"}), 400
+        return jsonify({"msg": "Missing JSON In Request"}), 400
     if not (valid_email(request.get_json()['email']) or
             valid_phone(request.get_json()['phone'])):
-        return jsonify({"msg": "Please enter valid email and phone numbers"}), 400
+        return jsonify({"msg": "Invalid Phone Number or Email"}), 400
 
     name = request.get_json()['name']
     email = request.get_json()['email']
@@ -98,7 +98,7 @@ def delete_entry() -> request:
 
     # Validate request
     if not valid_json(request):
-        return jsonify({"msg": "Missing JSON in request"}), 400
+        return jsonify({"msg": "Missing JSON In Request"}), 400
     db = database.get()
     member_id = request.get_json()['memberID']
 
@@ -118,7 +118,7 @@ def login() -> request:
     """ Accept login info and return JWT token """
 
     if not request.is_json:
-        return jsonify({"msg": "Missing JSON in request"}), 400
+        return jsonify({"msg": "Missing JSON In Request"}), 400
 
     username = request.get_json().get('username', None)
     password = request.get_json().get('password', None)
@@ -136,11 +136,11 @@ def login() -> request:
         db_password = query[0]['password']
         # Wrong password
         if password != db_password:
-            return jsonify({"msg": "Bad username or password"}), 401
+            return jsonify({"msg": "Bad Username Or Password"}), 401
         # Success
         else:
             access_token = create_access_token(identity=[username, query[0]['access_rights']])
             return jsonify(access_token=access_token), 200
     # No such username
     else:
-        return jsonify({"msg": "Bad username or password"}), 401
+        return jsonify({"msg": "Bad Username Or Password"}), 401
