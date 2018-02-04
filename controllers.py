@@ -3,7 +3,7 @@ Controllers
 """
 from trip_test import app
 from trip_test import database
-from trip_test.validators import valid_json, valid_email, valid_phone
+from trip_test import validators
 from flask import request, jsonify
 from flask_jwt_extended import (jwt_required,
                                 create_access_token,
@@ -22,7 +22,7 @@ def get_entry() -> request:
         return jsonify({"msg": "Access Denied"}), 403
 
     # Validate request
-    if not valid_json(request):
+    if not validators.json(request):
         return jsonify({"msg": "Missing JSON In Request"}), 400
 
     # Query database
@@ -53,10 +53,10 @@ def add_entry() -> request:
         return jsonify({"msg": "Access Denied"}), 200
 
     # Validate request
-    if not valid_json(request):
+    if not validators.json(request):
         return jsonify({"msg": "Missing JSON In Request"}), 400
-    if not (valid_email(request.get_json()['email']) or
-            valid_phone(request.get_json()['phone'])):
+    if not (validators.email(request.get_json()['email']) or
+            validators.phone(request.get_json()['phone'])):
         return jsonify({"msg": "Invalid Phone Number or Email"}), 400
 
     name = request.get_json()['name']
@@ -97,7 +97,7 @@ def delete_entry() -> request:
         return jsonify({"msg": "Access Denied"}), 200
 
     # Validate request
-    if not valid_json(request):
+    if not validators.json(request):
         return jsonify({"msg": "Missing JSON In Request"}), 400
     db = database.get()
     member_id = request.get_json()['memberID']
@@ -126,7 +126,7 @@ def login() -> request:
     if not username:
         return jsonify({"msg": "Missing username parameter"}), 400
     if not password:
-        return jsonify({"msg": "Missing password parameter"}), 400
+        return jsonify({"msg": "Missing passwordparameter"}), 400
 
     # Get user access rights from database
     db = database.get()

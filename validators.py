@@ -4,19 +4,19 @@ Validation Helper Functions
 import re
 from flask import request
 
-def valid_phone(phone_number: str) -> bool:
+def phone(phone_number: str) -> bool:
     """ Validates a phone number using a regex pattern """
     pattern = re.compile(r'(\d{3})\D*(\d{3})\D*(\d{4})\D*(\d*)$', re.VERBOSE)
     return pattern.match(phone_number) is not None
 
 
-def valid_email(email: str) -> bool:
+def email(email: str) -> bool:
     """ Validates a email using a regex pattern """
     pattern = re.compile(r'[^@]+@[^@]+\.[^@]+', re.VERBOSE)
     return pattern.match(email) is not None
 
 
-def valid_json(req: request) -> bool:
+def json(req: request) -> bool:
     """ ensure json requests contain correct fields """
     if not req.json:
         return False
