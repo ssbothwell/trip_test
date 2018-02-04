@@ -13,7 +13,7 @@ class TripTestCase(unittest.TestCase):
         trip_test.app.testing = True
         self.app = trip_test.app.test_client()
         with trip_test.app.app_context():
-            trip_test.trip_test.init_db()
+            trip_test.application.init_db()
         
         # Load an initial mock member
         name = 'initial user'

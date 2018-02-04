@@ -1,1 +1,1 @@
-web: gunicorn trip_test:app
+web: gunicorn application:app

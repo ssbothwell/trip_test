@@ -1,6 +1,5 @@
 todo: 
   - create environment specific config files
-  - rename trip_test.py to app.py
   - move database to postgres (?)
   - figure out redis or memcached
   - deploy site (heroku?)

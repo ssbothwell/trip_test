@@ -1,1 +1,1 @@
-from .trip_test import app
+from .application import app
