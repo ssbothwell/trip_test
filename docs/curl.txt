@@ -4,9 +4,12 @@ curl -i -H "Content-Type: application/json" -H "Authorization: Bearer $ACCESS" -
 
 # GET
 
-curl -i -H "Content-Type: application/json" -H "Authorization: Bearer $ACCESS" -X get -d '{"memberID": "1"}' http://localhost:5000
+curl -i -H "Content-Type: application/json" -H "Authorization: Bearer $ACCESS" -X GET -d '{"memberID": "1"}' http://localhost:5000
 
 # DELETE
+
+curl -i -H "Content-Type: application/json" -H "Authorization: Bearer $ACCESS" -X DELETE -d '{"memberID": "1"}' http://localhost:5000
+
 
 # LOGIN
 curl -H "Content-Type: application/json" -X POST \

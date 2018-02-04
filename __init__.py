@@ -1,1 +1,38 @@
-from .application import app
+"""
+Tripp Inc Backend Exercise
+Solomon Bothwell
+
+A basic REST interface to a sqlite database with JWT
+authorization. 
+"""
+import os
+from flask import Flask
+from flask_jwt_extended import JWTManager
+
+# Create application instance and load config
+app = Flask(__name__)
+app.config.from_object(__name__)
+
+# Default config
+app.config.update(dict(
+    DATABASE=os.path.join(app.root_path, 'trip_test.db'),
+    SECRET_KEY='development key',
+    USERNAME='admin',
+    PASSWORD='default'
+))
+app.config.from_envvar('TRIP_SETTINGS', silent=True)
+
+
+# Setup the Flask-JWT-Extended extension
+app.config['JWT_SECRET_KEY'] = 'super-secret'  # Change this!
+jwt = JWTManager(app)
+
+
+## Project Imports
+
+#from trip_test.database import (connect_db, get_db, close_db,
+#                      init_db, initdb_command)
+import trip_test.database
+import trip_test.controllers
+#import trip_test.models
+#import trip_test.validators

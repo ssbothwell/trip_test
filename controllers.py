@@ -1,84 +1,15 @@
 """
-Tripp Inc Backend Exercise
-Solomon Bothwell
-
-A basic REST interface to a sqlite database with JWT
-authorization. 
+Controllers
 """
-import os
-import sqlite3
 import re
-from flask import (Flask, request, g, jsonify, render_template)
-from flask_jwt_extended import (JWTManager, jwt_required,
+import sqlite3
+from trip_test import app
+from trip_test import database
+from flask import (request, g, jsonify, render_template)
+from flask_jwt_extended import (jwt_required,
                                 create_access_token,
                                 get_jwt_identity)
 
-### Configuration
-
-# Create application instance and load config
-app = Flask(__name__)
-app.config.from_object(__name__)
-
-# Default config
-app.config.update(dict(
-    DATABASE=os.path.join(app.root_path, 'trip_test.db'),
-    SECRET_KEY='development key',
-    USERNAME='admin',
-    PASSWORD='default'
-))
-app.config.from_envvar('TRIP_SETTINGS', silent=True)
-
-# Setup the Flask-JWT-Extended extension
-app.config['JWT_SECRET_KEY'] = 'super-secret'  # Change this!
-jwt = JWTManager(app)
-
-
-### Database management
-
-def connect_db():
-    """ connect to sqlite database """
-
-    database = sqlite3.connect(app.config['DATABASE'])
-    database.row_factory = sqlite3.Row
-    return database
-
-
-def get_db():
-    """ returns the database if already connected
-    else connects database and returns it """
-
-    if not hasattr(g, 'sqlite_db'):
-        g.sqlite_db = connect_db()
-    return g.sqlite_db
-
-
-@app.teardown_appcontext
-def close_db(error) -> None:
-    """ Close database connect """
-
-    if hasattr(g, 'sqlite_db'):
-        g.sqlite_db.close()
-
-
-def init_db() -> None:
-    """ Writes the schema file to the database """
-
-    database = get_db()
-    with app.open_resource('schema.sql', mode='r') as schema:
-        database.cursor().executescript(schema.read())
-    database.commit()
-
-
-@app.cli.command('initdb')
-def initdb_command() -> None:
-    """ initialization function for use with
-    the Flask CLI tool """
-
-    init_db()
-    print('Database initialized')
-
-
-### Controllers
 
 @app.route('/', methods=['GET'])
 @jwt_required
@@ -96,10 +27,10 @@ def get_entry() -> request:
         return jsonify({"msg": "Missing JSON in request"}), 400
 
     # Query database
-    database = get_db()
+    db = database.get_db()
     member_id = request.get_json()['memberID']
 
-    query = database.execute('SELECT * FROM members where memberID=?', [member_id]).fetchall()
+    query = db.execute('SELECT * FROM members where memberID=?', [member_id]).fetchall()
     entries = [{'memberID': row['memberID'],
                 'name': row['name'],
                 'phone': row['phone'],
@@ -141,17 +72,17 @@ def add_entry() -> request:
     # As a work-around I am doing a second query to check
     # for existing records with the desired `name` field.
 
-    database = get_db()
-    user = database.execute('SELECT name FROM members WHERE name=?',
+    db = database.get_db()
+    user = db.execute('SELECT name FROM members WHERE name=?',
                             [name]).fetchone()
     # Name field already exists
     if user:
         return jsonify({"msg": "Name Already Exists"}), 409
     # Name field doesn't exist so create a row
     else:
-        database.execute('INSERT INTO members (name, email, phone) \
+        db.execute('INSERT INTO members (name, email, phone) \
                          VALUES (?, ?, ?)', [name, email, phone])
-    database.commit()
+    db.commit()
     return jsonify({"msg": "Success"}), 201
 
 
@@ -169,16 +100,16 @@ def delete_entry() -> request:
     # Validate request
     if not valid_json(request):
         return jsonify({"msg": "Missing JSON in request"}), 400
-    database = get_db()
+    db = database.get_db()
     member_id = request.get_json()['memberID']
 
     # Check for entry
-    user = database.execute('SELECT name FROM members WHERE memberID=?',
+    user = db.execute('SELECT name FROM members WHERE memberID=?',
                             [member_id]).fetchall()
     if user:
-        database.execute('DELETE FROM members WHERE memberID=?',
+        db.execute('DELETE FROM members WHERE memberID=?',
                          [member_id])
-        database.commit()
+        db.commit()
         return jsonify({"msg": "success"}), 200
     return jsonify({"msg": "No Such Entry"}), 404
 
@@ -199,8 +130,8 @@ def login() -> request:
         return jsonify({"msg": "Missing password parameter"}), 400
 
     # Get user access rights from database
-    database = get_db()
-    query = database.execute('SELECT * FROM users where username=?',
+    db = database.get_db()
+    query = db.execute('SELECT * FROM users where username=?',
                              [username]).fetchall()
     if query:
         db_password = query[0]['password']
