@@ -27,8 +27,8 @@ def valid_json(req: request) -> bool:
         return False
 
     if (req.method == 'PUT' and
-           (not 'name' in req.json or
-            not 'email' in req.json or
-            not 'phone' in req.json)):
+            (not 'name' in req.json or
+             not 'email' in req.json or
+             not 'phone' in req.json)):
         return False
     return True

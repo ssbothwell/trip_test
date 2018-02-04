@@ -7,3 +7,4 @@ todo:
   - Standardize returned json response syntax
     second query to check for duplicate entries.
   - expand functionality of validators
+  - add unit tests for validators

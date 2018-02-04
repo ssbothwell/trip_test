@@ -3,7 +3,7 @@ Tripp Inc Backend Exercise
 Solomon Bothwell
 
 A basic REST interface to a sqlite database with JWT
-authorization. 
+authorization.
 """
 import os
 from flask import Flask

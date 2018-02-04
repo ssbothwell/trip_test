@@ -1,11 +1,10 @@
 """
 Controllers
 """
-import sqlite3
 from trip_test import app
 from trip_test import database
 from trip_test.validators import valid_json, valid_email, valid_phone
-from flask import (request, g, jsonify, render_template)
+from flask import request, jsonify
 from flask_jwt_extended import (jwt_required,
                                 create_access_token,
                                 get_jwt_identity)
@@ -74,14 +73,14 @@ def add_entry() -> request:
 
     db = database.get()
     user = db.execute('SELECT name FROM members WHERE name=?',
-                            [name]).fetchone()
+                      [name]).fetchone()
     # Name field already exists
     if user:
         return jsonify({"msg": "Name Already Exists"}), 409
     # Name field doesn't exist so create a row
     else:
         db.execute('INSERT INTO members (name, email, phone) \
-                         VALUES (?, ?, ?)', [name, email, phone])
+                   VALUES (?, ?, ?)', [name, email, phone])
     db.commit()
     return jsonify({"msg": "Success"}), 201
 
@@ -105,10 +104,10 @@ def delete_entry() -> request:
 
     # Check for entry
     user = db.execute('SELECT name FROM members WHERE memberID=?',
-                            [member_id]).fetchall()
+                      [member_id]).fetchall()
     if user:
         db.execute('DELETE FROM members WHERE memberID=?',
-                         [member_id])
+                   [member_id])
         db.commit()
         return jsonify({"msg": "success"}), 200
     return jsonify({"msg": "No Such Entry"}), 404
@@ -132,7 +131,7 @@ def login() -> request:
     # Get user access rights from database
     db = database.get()
     query = db.execute('SELECT * FROM users where username=?',
-                             [username]).fetchall()
+                       [username]).fetchall()
     if query:
         db_password = query[0]['password']
         # Wrong password
@@ -145,4 +144,3 @@ def login() -> request:
     # No such username
     else:
         return jsonify({"msg": "Bad username or password"}), 401
-
