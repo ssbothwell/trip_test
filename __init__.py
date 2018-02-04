@@ -28,11 +28,8 @@ app.config['JWT_SECRET_KEY'] = 'super-secret'  # Change this!
 jwt = JWTManager(app)
 
 
-## Project Imports
-
-#from trip_test.database import (connect_db, get_db, close_db,
-#                      init_db, initdb_command)
+### Project Imports
 import trip_test.database
 import trip_test.controllers
+import trip_test.validators
 #import trip_test.models
-#import trip_test.validators

@@ -27,7 +27,7 @@ def get_entry() -> request:
         return jsonify({"msg": "Missing JSON in request"}), 400
 
     # Query database
-    db = database.get_db()
+    db = database.get()
     member_id = request.get_json()['memberID']
 
     query = db.execute('SELECT * FROM members where memberID=?', [member_id]).fetchall()
@@ -72,7 +72,7 @@ def add_entry() -> request:
     # As a work-around I am doing a second query to check
     # for existing records with the desired `name` field.
 
-    db = database.get_db()
+    db = database.get()
     user = db.execute('SELECT name FROM members WHERE name=?',
                             [name]).fetchone()
     # Name field already exists
@@ -100,7 +100,7 @@ def delete_entry() -> request:
     # Validate request
     if not valid_json(request):
         return jsonify({"msg": "Missing JSON in request"}), 400
-    db = database.get_db()
+    db = database.get()
     member_id = request.get_json()['memberID']
 
     # Check for entry
@@ -130,7 +130,7 @@ def login() -> request:
         return jsonify({"msg": "Missing password parameter"}), 400
 
     # Get user access rights from database
-    db = database.get_db()
+    db = database.get()
     query = db.execute('SELECT * FROM users where username=?',
                              [username]).fetchall()
     if query:

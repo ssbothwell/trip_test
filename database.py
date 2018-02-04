@@ -6,7 +6,7 @@ from trip_test import app
 from flask import g
 
 
-def connect_db():
+def connect():
     """ connect to sqlite database """
 
     database = sqlite3.connect(app.config['DATABASE'])
@@ -14,27 +14,27 @@ def connect_db():
     return database
 
 
-def get_db():
+def get():
     """ returns the database if already connected
     else connects database and returns it """
 
-    if not hasattr(g, 'sqlite_db'):
-        g.sqlite_db = connect_db()
-    return g.sqlite_db
+    if not hasattr(g, 'sqlite'):
+        g.sqlite = connect()
+    return g.sqlite
 
 
 @app.teardown_appcontext
-def close_db(error) -> None:
+def close(error) -> None:
     """ Close database connect """
 
-    if hasattr(g, 'sqlite_db'):
-        g.sqlite_db.close()
+    if hasattr(g, 'sqlite'):
+        g.sqlite.close()
 
 
-def init_db() -> None:
+def init() -> None:
     """ Writes the schema file to the database """
 
-    database = get_db()
+    database = get()
     with app.open_resource('schema.sql', mode='r') as schema:
         database.cursor().executescript(schema.read())
     database.commit()
@@ -45,5 +45,5 @@ def initdb_command() -> None:
     """ initialization function for use with
     the Flask CLI tool """
 
-    init_db()
+    init()
     print('Database initialized')
