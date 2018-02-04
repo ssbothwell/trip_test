@@ -2,8 +2,117 @@ import os
 import trip_test
 import unittest
 import tempfile
-from flask import request
+from flask import request, Response
 import json
+
+
+class Request:
+    """
+    Fake request for testing json validator
+    """
+    def __init__(self):
+        self.method = 'GET'
+        self.json = { 'memberID': 1}
+
+
+class ValidatorsTestCases(unittest.TestCase):
+    def test_json_a(self):
+        """
+        json validator success test
+        Uses a GET request
+        """
+        resp = Request()
+        self.assertTrue(trip_test.validators.json(resp))
+
+
+    def test_json_b(self):
+        """
+        json validator failure test
+        Uses a GET request wrong json data
+        """
+        resp = Request()
+        resp.json = {'foo': 'bar'}
+        self.assertFalse(trip_test.validators.json(resp))
+
+
+    def test_json_c(self):
+        """
+        json validator success test
+        Uses a PUT request
+        """
+        resp = Request()
+        resp.method = 'PUT'
+        resp.json = {'name': 'foo', 
+                     'phone': '8001234567', 
+                     'email': 'foo@bar.baz'
+                    }
+        self.assertTrue(trip_test.validators.json(resp))
+
+
+    def test_json_d(self):
+        """
+        json validator failure test
+        Uses a PUT request
+        """
+        resp = Request()
+        resp.method = 'PUT'
+        resp.json = {'foo': 'foo', 
+                     'phone': '8001234567', 
+                     'email': 'foo@bar.baz'
+                    }
+        self.assertFalse(trip_test.validators.json(resp))
+
+
+    def test_email_a(self):
+        """
+        email validator success test
+        """
+        email = "foo@bar.baz"
+        self.assertTrue(trip_test.validators.email(email))
+
+
+    def test_email_b(self):
+        """
+        email validator failure test
+        Does not contain `@`
+        """
+        email = "foo.com"
+        self.assertFalse(trip_test.validators.email(email))
+
+
+    def test_email_c(self):
+        """
+        email validator failure test
+        Does not contain `.`
+        """
+        email = "foo@bar"
+        self.assertFalse(trip_test.validators.email(email))
+
+
+    def test_phone_a(self):
+        """
+        phone validator success test
+        """
+        number = "8001234567"
+        self.assertTrue(trip_test.validators.phone(number))
+
+
+    def test_phone_b(self):
+        """
+        phone validator failure test
+        number too short
+        """
+        number = "1"
+        self.assertFalse(trip_test.validators.phone(number))
+
+
+    def test_phone_c(self):
+        """
+        phone validator failure test
+        number contains letters 
+        """
+        number = "800123456A"
+        self.assertFalse(trip_test.validators.phone(number))
 
 
 class ControllersTestCases(unittest.TestCase):
