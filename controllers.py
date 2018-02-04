@@ -9,7 +9,6 @@ from flask_jwt_extended import (jwt_required,
                                 create_access_token,
                                 get_jwt_identity)
 
-
 @app.route('/', methods=['GET'])
 @jwt_required
 def get_entry() -> request:
@@ -26,15 +25,17 @@ def get_entry() -> request:
         return jsonify({"msg": "Missing JSON In Request"}), 400
 
     # Query database
-    db = database.get()
+    db_connection = database.get()
     member_id = request.get_json()['memberID']
 
-    query = db.execute('SELECT * FROM members where memberID=?', [member_id]).fetchall()
+    cursor = db_connection.execute('SELECT * FROM members \
+                                   where memberID=?', (member_id,))
+    rows = cursor.fetchall()
     entries = [{'memberID': row['memberID'],
                 'name': row['name'],
                 'phone': row['phone'],
                 'email': row['email']
-               } for row in query]
+               } for row in rows]
     if entries:
         return jsonify(entries[0]), 200
     else:
@@ -70,18 +71,20 @@ def add_entry() -> request:
     # fields.
     # As a work-around I am doing a second query to check
     # for existing records with the desired `name` field.
-
-    db = database.get()
-    user = db.execute('SELECT name FROM members WHERE name=?',
-                      [name]).fetchone()
+    db_connection = database.get()
+    cursor = db_connection.execute('SELECT name FROM members \
+                                   WHERE name=?', (name,))
+    rows = cursor.fetchall()
     # Name field already exists
-    if user:
+    if rows:
         return jsonify({"msg": "Name Already Exists"}), 409
     # Name field doesn't exist so create a row
     else:
-        db.execute('INSERT INTO members (name, email, phone) \
-                   VALUES (?, ?, ?)', [name, email, phone])
-    db.commit()
+        db_connection.execute('INSERT INTO members \
+                              (name, email, phone) \
+                              VALUES (?, ?, ?)', 
+                              (name, email, phone))
+    db_connection.commit()
     return jsonify({"msg": "Success"}), 201
 
 
@@ -99,16 +102,17 @@ def delete_entry() -> request:
     # Validate request
     if not validators.json(request):
         return jsonify({"msg": "Missing JSON In Request"}), 400
-    db = database.get()
+    db_connection = database.get()
     member_id = request.get_json()['memberID']
 
     # Check for entry
-    user = db.execute('SELECT name FROM members WHERE memberID=?',
-                      [member_id]).fetchall()
-    if user:
-        db.execute('DELETE FROM members WHERE memberID=?',
-                   [member_id])
-        db.commit()
+    cursor = db_connection.execute('SELECT name FROM members \
+                                   WHERE memberID=?', (member_id,))
+    rows = cursor.fetchall()
+    if rows:
+        db_connection.execute('DELETE FROM members WHERE memberID=?',
+                              (member_id,))
+        db_connection.commit()
         return jsonify({"msg": "success"}), 200
     return jsonify({"msg": "No Such Entry"}), 404
 
@@ -129,17 +133,19 @@ def login() -> request:
         return jsonify({"msg": "Missing password parameter"}), 400
 
     # Get user access rights from database
-    db = database.get()
-    query = db.execute('SELECT * FROM users where username=?',
-                       [username]).fetchall()
-    if query:
-        db_password = query[0]['password']
+    db_connection = database.get()
+    cursor = db_connection.execute('SELECT * FROM users \
+                                   where username=?', (username,))
+    rows = cursor.fetchall()
+
+    if rows:
+        db_password = rows[0]['password']
         # Wrong password
         if password != db_password:
             return jsonify({"msg": "Bad Username Or Password"}), 401
         # Success
         else:
-            access_token = create_access_token(identity=[username, query[0]['access_rights']])
+            access_token = create_access_token(identity=[username, rows[0]['access_rights']])
             return jsonify(access_token=access_token), 200
     # No such username
     else:

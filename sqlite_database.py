@@ -1,5 +1,5 @@
 """
-postgres database wrapper
+Sqlite database wrapper
 """
 import sqlite3
 from trip_test import app

@@ -1,9 +1,9 @@
 import os
-import trip_test
 import unittest
-import tempfile
-from flask import request, Response
 import json
+import tempfile
+import trip_test
+from flask import request, Response
 
 
 class Request:
