@@ -40,9 +40,8 @@ installation script to demonstrate successful function of the code is optional.
 
 ### Implementation Details
 
-I wrote this REST server using Flask, SQLite3 database, and 
+I wrote this REST server using Flask, PostgreSQL, and 
 the Flask-JWT-Exended plugin. The database contains a the
-
 `members` table as described in the assignment and a `users`
 table for access control and JWT token generation. Users must
 hit `/login` route with a `POST` request containing valid 
@@ -76,12 +75,10 @@ $ py.test tests/
 
 ### Known Issues
 
-SQLite database is not suitable for cloud server setups such
-as Heroku. I plan to switch to PostgreSQL
+I have yet to implement redis or memcached.
 
-I also am not sure how well Memcached will integrate with SQLite.
-I am currently looking into this.
+Production specific environment variables for database user
+and JWT secret key are not defined yet. 
 
-Production specific environment variables are not currently 
-defined yet. I think the implementation of this will be affected
-by my choice of cloud service provider.
+I think the implementation of this will be affected by my 
+choice of cloud service provider.
