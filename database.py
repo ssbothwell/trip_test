@@ -2,28 +2,33 @@
 postgres/psycopg2 wrapper
 """
 import psycopg2
-from configparser import ConfigParser
+import os
+from urllib import parse
 from trip_test import app
 from flask import g
 
 
 def config(filename='database.ini', section='postgresql'):
     """ Loads database config """
-    # create a parser
-    parser = ConfigParser()
-    # read config file
-    parser.read(filename)
- 
-    # get section, default to postgresql
-    db = {}
-    if parser.has_section(section):
-        params = parser.items(section)
-        for param in params:
-            db[param[0]] = param[1]
+    
+    # Production
+    if app.config['DEBUG'] == False:
+        parse.uses_netloc.append("postgres")
+        url = parse.urlparse(os.environ["DATABASE_URL"])
+        db_config = dict(database=url.path[1:],
+                         user=url.username,
+                         password=url.password,
+                         host=url.hostname,
+                         port=url.port
+                        )
+    # Development
     else:
-        raise Exception('Section {0} not found in the {1} file'.format(section, filename))
- 
-    return db
+        db_config = dict(host='localhost',
+                         database='trip_test',
+                         user='postgres',
+                         password='default'
+                        )
+    return db_config
 
 
 def connect():

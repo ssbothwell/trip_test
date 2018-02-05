@@ -13,6 +13,7 @@ from flask_jwt_extended import JWTManager
 
 # Create application instance
 app = Flask(__name__)
+app.config['DEBUG'] = False
 
 
 # Setup the Flask-JWT-Extended extension
