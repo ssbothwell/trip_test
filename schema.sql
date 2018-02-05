@@ -1,13 +1,13 @@
 drop table if exists members;
 drop table if exists users;
 create table members (
-  memberID integer primary key autoincrement,
+  memberID serial primary key,
   name text not null unique,
   email text not null,
   phone text not null
 );
 create table users (
-  userID integer primary key autoincrement,
+  userID serial primary key,
   username text not null,
   password text not null,
   access_rights integer default 0

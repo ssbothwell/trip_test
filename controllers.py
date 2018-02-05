@@ -24,20 +24,26 @@ def get_entry() -> request:
     if not validators.json(request):
         return jsonify({"msg": "Missing JSON In Request"}), 400
 
-    # Query database
-    db_connection = database.get()
     member_id = request.get_json()['memberID']
 
-    cursor = db_connection.execute('SELECT * FROM members \
-                                   where memberID=?', (member_id,))
-    rows = cursor.fetchall()
-    entries = [{'memberID': row['memberID'],
-                'name': row['name'],
-                'phone': row['phone'],
-                'email': row['email']
-               } for row in rows]
-    if entries:
-        return jsonify(entries[0]), 200
+    # Connect to database
+    db_connection = database.get()
+
+    # Get a cursor
+    cursor = db_connection.cursor()
+
+    # Query table for member
+    statement = 'SELECT * FROM members WHERE memberID=%s'
+    cursor.execute(statement, (member_id,))
+    member = cursor.fetchone()
+
+    if member:
+        member_dict = { 'memberID': member[0],
+                        'name': member[1],
+                        'email': member[2],
+                        'phone': member[3]
+                      }
+        return jsonify(member_dict), 200
     else:
         return jsonify({'msg': 'No Such User'}), 400
 
@@ -71,19 +77,26 @@ def add_entry() -> request:
     # fields.
     # As a work-around I am doing a second query to check
     # for existing records with the desired `name` field.
+
+    # Connect to database
     db_connection = database.get()
-    cursor = db_connection.execute('SELECT name FROM members \
-                                   WHERE name=?', (name,))
-    rows = cursor.fetchall()
+
+    # Get a cursor
+    cursor = db_connection.cursor()
+
+    # Check if member already in table
+    statement = 'SELECT name FROM members WHERE name=%s'
+    cursor.execute(statement, (name,))
+    member = cursor.fetchone()
+
     # Name field already exists
-    if rows:
+    if member:
         return jsonify({"msg": "Name Already Exists"}), 409
     # Name field doesn't exist so create a row
     else:
-        db_connection.execute('INSERT INTO members \
-                              (name, email, phone) \
-                              VALUES (?, ?, ?)', 
-                              (name, email, phone))
+        statement = 'INSERT INTO members (name, email, phone) \
+                    VALUES (%s, %s, %s)'
+        cursor.execute(statement, (name, email, phone))
     db_connection.commit()
     return jsonify({"msg": "Success"}), 201
 
@@ -102,16 +115,23 @@ def delete_entry() -> request:
     # Validate request
     if not validators.json(request):
         return jsonify({"msg": "Missing JSON In Request"}), 400
-    db_connection = database.get()
     member_id = request.get_json()['memberID']
 
-    # Check for entry
-    cursor = db_connection.execute('SELECT name FROM members \
-                                   WHERE memberID=?', (member_id,))
-    rows = cursor.fetchall()
-    if rows:
-        db_connection.execute('DELETE FROM members WHERE memberID=?',
-                              (member_id,))
+    # Connect to database
+    db_connection = database.get()
+
+    # Get a cursor
+    cursor = db_connection.cursor()
+
+    # Query for row
+    statement = 'SELECT name FROM members WHERE memberID=%s'
+    cursor.execute(statement, (member_id,))
+    member = cursor.fetchone()
+    
+    # Delete row if found
+    if member:
+        statement = 'DELETE FROM members WHERE memberID=%s'
+        cursor.execute(statement, (member_id,))
         db_connection.commit()
         return jsonify({"msg": "success"}), 200
     return jsonify({"msg": "No Such Entry"}), 404
@@ -132,20 +152,26 @@ def login() -> request:
     if not password:
         return jsonify({"msg": "Missing password parameter"}), 400
 
-    # Get user access rights from database
+    # Connect to database
     db_connection = database.get()
-    cursor = db_connection.execute('SELECT * FROM users \
-                                   where username=?', (username,))
-    rows = cursor.fetchall()
 
-    if rows:
-        db_password = rows[0]['password']
+    # Get a cursor
+    cursor = db_connection.cursor()
+
+    # Query if user exists in table
+    statement = 'SELECT * FROM users where username=%s'
+    cursor.execute(statement, (username,))
+    user = cursor.fetchone()
+
+    # Generate an access token if user exists
+    if user:
+        db_password = user[2]
         # Wrong password
         if password != db_password:
             return jsonify({"msg": "Bad Username Or Password"}), 401
         # Success
         else:
-            access_token = create_access_token(identity=[username, rows[0]['access_rights']])
+            access_token = create_access_token(identity=[username, user[3]])
             return jsonify(access_token=access_token), 200
     # No such username
     else:
