@@ -1,8 +1,12 @@
 import os
+import sys
+
+sys.path.insert(0,os.path.abspath(__file__+"/../.."))
+
 import unittest
 import json
 import tempfile
-import trip_test
+import application as trip_test
 from flask import request, Response
 
 

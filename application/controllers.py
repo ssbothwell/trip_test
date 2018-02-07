@@ -1,9 +1,9 @@
 """
 Controllers
 """
-from trip_test import app
-from trip_test import database
-from trip_test import validators
+from application import app
+from application import database
+from application import validators
 from flask import request, jsonify
 from flask_jwt_extended import (jwt_required,
                                 create_access_token,

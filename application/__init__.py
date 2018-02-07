@@ -22,7 +22,7 @@ jwt = JWTManager(app)
 
 
 ### Component Imports
-import trip_test.database
-import trip_test.controllers
-import trip_test.validators
+import application.database
+import application.controllers
+import application.validators
 #import trip_test.models

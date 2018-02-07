@@ -4,7 +4,7 @@ postgres/psycopg2 wrapper
 import psycopg2
 import os
 from urllib import parse
-from trip_test import app
+from application import app
 from flask import g
 
 

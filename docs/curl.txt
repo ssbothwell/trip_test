@@ -1,20 +1,20 @@
 # PUT
 
-curl -i -H "Content-Type: application/json" -H "Authorization: Bearer $ACCESS" -X PUT -d '{"name":"solomon", "email":"ssbothwell@gmail.com", "phone":"3238047139"}' http://localhost:5000
+curl -i -H "Content-Type: application/json" -H "Authorization: Bearer $ACCESS" -X PUT -d '{"name":"solomon", "email":"ssbothwell@gmail.com", "phone":"3238047139"}' http://localhost:8000
 
 # GET
 
-curl -i -H "Content-Type: application/json" -H "Authorization: Bearer $ACCESS" -X GET -d '{"memberID": "1"}' http://localhost:5000
+curl -i -H "Content-Type: application/json" -H "Authorization: Bearer $ACCESS" -X GET -d '{"memberID": "1"}' http://localhost:8000
 
 # DELETE
 
-curl -i -H "Content-Type: application/json" -H "Authorization: Bearer $ACCESS" -X DELETE -d '{"memberID": "1"}' http://localhost:5000
+curl -i -H "Content-Type: application/json" -H "Authorization: Bearer $ACCESS" -X DELETE -d '{"memberID": "1"}' http://localhost:8000
 
 
 # LOGIN
 curl -H "Content-Type: application/json" -X POST \
-  -d '{"username":"nothing_user","password":"password"}' http://localhost:5000/login
+  -d '{"username":"nothing_user","password":"password"}' http://localhost:8000/login
 
 curl -H "Content-Type: application/json" -X POST \
-  -d '{"username":"admin_user","password":"password"}' http://localhost:5000/login
+  -d '{"username":"admin_user","password":"password"}' http://localhost:8000/login
 
